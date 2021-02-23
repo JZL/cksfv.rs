@@ -1,3 +1,12 @@
+# Fork Changes
+
+This is a simple fork of the useful package `cksfv.rs` to change from CRC32 -> CRC32**C** checksums (the checksum used by default by google cloud storage). It is nothing more fancy than changing the internal CRC package from `crc32fast` -> `crc32c-hw` and changing the functions which call it.
+
+In short and un-scientific tests, I found this to be ~30% faster than Google's `gsutil hash` function (even with recompiled `crcmod`) with a cold cache and ~80-90% faster with a pre-warmed cache.
+
+Hope it's useful!
+
+
 # `cksfv.rs` [![Star me](https://img.shields.io/github/stars/althonos/cksfv.rs.svg?style=social&label=Star&maxAge=3600)](https://github.com/althonos/cksfv.rs/stargazers)
 
 *A 10x faster drop-in reimplementation of [cksfv](https://zakalwe.fi/~shd/foss/cksfv/)

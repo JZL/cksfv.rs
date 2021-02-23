@@ -1,7 +1,8 @@
 #[macro_use]
 extern crate clap;
 extern crate chrono;
-extern crate crc32fast;
+// extern crate crc32fast;
+extern crate crc32c_hw;
 
 #[cfg(feature = "mmap")]
 extern crate memmap;
@@ -23,7 +24,8 @@ use chrono::Timelike;
 use getset::Getters;
 use getset::MutGetters;
 use getset::Setters;
-use crc32fast::Hasher;
+// use crc32fast::Hasher;
+
 
 /// Use a 64k buffer size for better performance.
 const DEFAULT_BUFFER_SIZE: usize = 65536;
@@ -49,25 +51,27 @@ fn compute_crc32(file: &Path) -> Result<Crc32, IoError> {
 /// Compute a CRC32 from a file content using `mmap`.
 #[cfg(feature = "mmap")]
 fn compute_crc32_inner(mut file: File) -> Result<Crc32, IoError> {
-    let mut hasher = Hasher::new();
+    println!("MMAP");
+    let mut hasher = 0;
     let mmap = unsafe { memmap::MmapOptions::new().map(&file)? };
-    hasher.update(&mmap[..]);
-    Ok(hasher.finalize())
+    hasher = crc32c_hw::update(hasher, &mmap[..]);
+    Ok(hasher)
 }
 
 /// Compute a CRC32 from a file content without using `mmap`.
 #[cfg(not(feature = "mmap"))]
 fn compute_crc32_inner(mut file: File) -> Result<Crc32, IoError> {
-    let mut hasher = Hasher::new();
+    println!("NO MMAP");
+    let mut hasher = 0;
     let mut buffer = [0; DEFAULT_BUFFER_SIZE];
     loop {
         let n = file.read(&mut buffer)?;
         if n == 0 {
             break;
         }
-        hasher.update(&mut buffer[..n]);
+        hasher = crc32c_hw::update(hasher, &mut buffer[..n]);
     }
-    Ok(hasher.finalize())
+    Ok(hasher)
 }
 
 // ---------------------------------------------------------------------------
